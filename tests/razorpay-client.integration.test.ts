@@ -15,7 +15,7 @@ const client = new RazorpayClient({
   webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? "test_secret",
 });
 
-describe.runIf(keyId && keySecret)("RazorpayClient against test mode", () => {
+describe.runIf(keyId && keySecret && !keyId.includes("placeholder"))("RazorpayClient against test mode", () => {
   it("creates an order that is readable by id immediately", async () => {
     const key = randomUUID();
     const order = await client.createOrder({
