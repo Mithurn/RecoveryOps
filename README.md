@@ -262,21 +262,21 @@ npm run dev                   # API :3000, web :5173
 npm test                      # 247 tests
 ```
 
-### Deploy free (bring your own keys)
+### Live demo and AWS deploy
 
-One container serves the API and web UI; Caddy adds automatic HTTPS. Everything runs on one free VM.
+Live: https://recoveryops.duckdns.org (stopped between uses, so it may be asleep).
 
-1. Create an Oracle Cloud Always Free VM (Ubuntu, ARM Ampere) and open ports 80 and 443.
-2. Get a free hostname at duckdns.org pointing at the VM's IP.
-3. On the VM:
+`deploy/aws/` creates one small EC2 instance that runs the whole stack and can be stopped when idle, so only its disk is billed:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Mithurn/RecoveryOps/main/deploy/bootstrap.sh | \
-  OPENROUTER_API_KEY=... RAZORPAY_KEY_ID=... RAZORPAY_KEY_SECRET=... RAZORPAY_WEBHOOK_SECRET=... \
-  SITE_ADDRESS=yourname.duckdns.org bash
+deploy/aws/up.sh                          # one time: reads keys from .env, stores them in SSM, creates the instance
+deploy/aws/domain.sh <name> <duckdns-token>   # optional stable HTTPS name
+deploy/aws/start.sh                       # before a demo
+deploy/aws/stop.sh                        # after
+deploy/aws/status.sh
 ```
 
-The script installs Docker, generates the access token and database password, builds, starts and seeds the demo data. Point the Razorpay test webhook at `/api/webhooks/razorpay`. `DEMO_ACCESS_TOKEN` is bundled into the web build, so treat the deployment as a demo, not an authenticated product.
+Any Docker host works too: `docker compose -f docker-compose.prod.yml up -d --build`, with `SITE_ADDRESS` set to your hostname for automatic HTTPS. `DEMO_ACCESS_TOKEN` is bundled into the web build, so treat the deployment as a demo, not an authenticated product.
 
 ### Reproduce the evaluation
 

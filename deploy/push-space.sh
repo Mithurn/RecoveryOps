@@ -6,6 +6,10 @@ SPACE=${1:?usage: push-space.sh <user>/<space>}
 : "${HF_TOKEN:?set HF_TOKEN}"
 cd "$(git rev-parse --show-toplevel)"
 
+curl -sS -o /dev/null -X POST https://huggingface.co/api/repos/create \
+  -H "Authorization: Bearer $HF_TOKEN" -H "Content-Type: application/json" \
+  -d "{\"type\":\"space\",\"sdk\":\"docker\",\"name\":\"${SPACE#*/}\",\"organization\":\"${SPACE%/*}\"}" || true
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 git archive HEAD | tar -x -C "$TMP"
