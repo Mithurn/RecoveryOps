@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.62",
+    "@fastify/static": "^10.1.6",
     "@openrouter/ai-sdk-provider": "^3.0.0",
     "@xyflow/react": "^12.11.6",
     "ai": "^7.0.89",

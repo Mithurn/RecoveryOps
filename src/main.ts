@@ -1,4 +1,7 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
+import fastifyStatic from "@fastify/static";
 import { loadConfig } from "./config.js";
 import { createPool } from "./persistence/pool.js";
 import { PostgresCaseRepository } from "./persistence/case-repository.js";
@@ -113,7 +116,7 @@ const webhookHandler = new WebhookHandler({
   merchantRef: config.MERCHANT_REF,
 });
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, rewriteUrl: (req) => (req.url ?? "/").replace(/^\/api(?=\/|\?|$)/, "") || "/" });
 // Keep the raw JSON bytes so the Razorpay webhook HMAC verifies against exactly what was sent.
 app.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
   (req as { rawBody?: string }).rawBody = body as string;
@@ -125,6 +128,8 @@ app.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, 
     done(parseError, undefined);
   }
 });
+const webDist = fileURLToPath(new URL("../web/dist", import.meta.url));
+if (existsSync(webDist)) await app.register(fastifyStatic, { root: webDist, wildcard: false });
 app.get("/health", async () => ({ status: "ok" }));
 await registerRoutes(app, {
   cases,

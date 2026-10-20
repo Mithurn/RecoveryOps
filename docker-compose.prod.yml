@@ -1,0 +1,58 @@
+services:
+  postgres:
+    restart: unless-stopped
+    image: postgres:16
+    environment:
+      POSTGRES_USER: recovery
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set in .env}
+      POSTGRES_DB: recovery
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recovery -d recovery"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  redis:
+    restart: unless-stopped
+    image: redis:7
+    volumes:
+      - redisdata:/data
+
+  app:
+    restart: unless-stopped
+    build:
+      context: .
+      args:
+        VITE_DEMO_ACCESS_TOKEN: ${DEMO_ACCESS_TOKEN:?set in .env}
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://recovery_app:recovery_dev@postgres:5432/recovery
+      ADMIN_DATABASE_URL: postgres://recovery:${POSTGRES_ADMIN_PASSWORD}@postgres:5432/recovery
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:

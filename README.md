@@ -262,6 +262,22 @@ npm run dev                   # API :3000, web :5173
 npm test                      # 247 tests
 ```
 
+### Deploy free (bring your own keys)
+
+One container serves the API and web UI; Caddy adds automatic HTTPS. Everything runs on one free VM.
+
+1. Create an Oracle Cloud Always Free VM (Ubuntu, ARM Ampere) and open ports 80 and 443.
+2. Get a free hostname at duckdns.org pointing at the VM's IP.
+3. On the VM:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Mithurn/RecoveryOps/main/deploy/bootstrap.sh | \
+  OPENROUTER_API_KEY=... RAZORPAY_KEY_ID=... RAZORPAY_KEY_SECRET=... RAZORPAY_WEBHOOK_SECRET=... \
+  SITE_ADDRESS=yourname.duckdns.org bash
+```
+
+The script installs Docker, generates the access token and database password, builds, starts and seeds the demo data. Point the Razorpay test webhook at `/api/webhooks/razorpay`. `DEMO_ACCESS_TOKEN` is bundled into the web build, so treat the deployment as a demo, not an authenticated product.
+
 ### Reproduce the evaluation
 
 ```bash
